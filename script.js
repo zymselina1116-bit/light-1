@@ -91,30 +91,28 @@ function generateRopes() {
         // Random angle (in radians) for rope direction
         const angle = Math.random() * Math.PI * 2; // 0 to 360 degrees
 
-        // Random start position somewhere on screen
-        const startX = Math.random() * canvas.width;
-        const startY = Math.random() * canvas.height;
+        // Position ropes evenly across the screen with some randomness
+        const centerX = (canvas.width / numRopes) * i + (canvas.width / numRopes / 2);
+        const centerY = canvas.height / 2;
 
-        // Calculate length to ensure rope extends across screen
-        const ropeLength = Math.max(canvas.width, canvas.height) * 1.5;
+        // Calculate length to ensure rope extends well beyond screen
+        const ropeLength = Math.max(canvas.width, canvas.height) * 2;
 
-        // Calculate end position based on angle and length
-        const endX = startX + Math.cos(angle) * ropeLength;
-        const endY = startY + Math.sin(angle) * ropeLength;
-
-        // Calculate actual start point (extend backwards)
-        const actualStartX = startX - Math.cos(angle) * (ropeLength / 2);
-        const actualStartY = startY - Math.sin(angle) * (ropeLength / 2);
+        // Calculate start and end positions based on angle and length
+        const x1 = centerX - Math.cos(angle) * ropeLength / 2;
+        const y1 = centerY - Math.sin(angle) * ropeLength / 2;
+        const x2 = centerX + Math.cos(angle) * ropeLength / 2;
+        const y2 = centerY + Math.sin(angle) * ropeLength / 2;
 
         // Random thickness type
         const typeName = typeNames[Math.floor(Math.random() * typeNames.length)];
         const type = ropeTypes[typeName];
 
         ropes.push({
-            x1: actualStartX,           // Start X position
-            y1: actualStartY,           // Start Y position
-            x2: endX,                   // End X position
-            y2: endY,                   // End Y position
+            x1: x1,                     // Start X position
+            y1: y1,                     // Start Y position
+            x2: x2,                     // End X position
+            y2: y2,                     // End Y position
             angle: angle,               // Rope angle in radians
             type: type,
             typeName: typeName,
