@@ -17,10 +17,6 @@ function resizeCanvas() {
     generateRopes();
 }
 
-// Initial setup
-resizeCanvas();
-window.addEventListener('resize', resizeCanvas);
-
 // ==========================================
 // MOUSE TRACKING
 // ==========================================
@@ -131,8 +127,9 @@ function generateRopes() {
     }
 }
 
-// Initial rope generation
-generateRopes();
+// Initial setup and rope generation
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
 
 // ==========================================
 // COLLISION DETECTION
