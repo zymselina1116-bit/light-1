@@ -84,27 +84,44 @@ let ropes = [];
 // Generate ropes across the screen
 function generateRopes() {
     ropes = [];
-    const numRopes = Math.floor(canvas.width / 80) + 5; // More ropes for wider screens
+    const numRopes = 20; // Fixed number of ropes
     const typeNames = ['thin', 'medium', 'thick'];
 
     for (let i = 0; i < numRopes; i++) {
-        // Random position across the width
-        const x = (canvas.width / (numRopes - 1)) * i + (Math.random() - 0.5) * 20;
+        // Random angle (in radians) for rope direction
+        const angle = Math.random() * Math.PI * 2; // 0 to 360 degrees
+
+        // Random start position somewhere on screen
+        const startX = Math.random() * canvas.width;
+        const startY = Math.random() * canvas.height;
+
+        // Calculate length to ensure rope extends across screen
+        const ropeLength = Math.max(canvas.width, canvas.height) * 1.5;
+
+        // Calculate end position based on angle and length
+        const endX = startX + Math.cos(angle) * ropeLength;
+        const endY = startY + Math.sin(angle) * ropeLength;
+
+        // Calculate actual start point (extend backwards)
+        const actualStartX = startX - Math.cos(angle) * (ropeLength / 2);
+        const actualStartY = startY - Math.sin(angle) * (ropeLength / 2);
 
         // Random thickness type
         const typeName = typeNames[Math.floor(Math.random() * typeNames.length)];
         const type = ropeTypes[typeName];
 
         ropes.push({
-            x: x,
-            y1: 0,                      // Top of screen
-            y2: canvas.height,          // Bottom of screen
+            x1: actualStartX,           // Start X position
+            y1: actualStartY,           // Start Y position
+            x2: endX,                   // End X position
+            y2: endY,                   // End Y position
+            angle: angle,               // Rope angle in radians
             type: type,
             typeName: typeName,
             burnProgress: 0,            // Burn progress in milliseconds
             isBurning: false,           // Currently being burned flag
             isBroken: false,            // Has been burned through flag
-            breakPoint: 0,              // Y position where rope broke
+            breakPoint: { x: 0, y: 0 }, // Position where rope broke
             breakAnimation: 0,          // Animation progress for breaking effect
             lastBurnTime: Date.now()    // Timestamp for burn timing
         });
@@ -130,22 +147,40 @@ function checkFlameRopeCollision(rope) {
     const flameX = mouse.x;
     const flameY = mouse.y + candle.flameOffsetY;
 
-    // Check if flame is within horizontal range of rope
-    const horizontalDistance = Math.abs(flameX - rope.x);
-    if (horizontalDistance > (rope.type.width / 2 + candle.flameRadius)) {
-        return null;
+    // Calculate distance from point to line segment
+    // Using formula: distance from point to line
+    const x1 = rope.x1;
+    const y1 = rope.y1;
+    const x2 = rope.x2;
+    const y2 = rope.y2;
+
+    // Line length squared
+    const lengthSquared = (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1);
+    if (lengthSquared === 0) return null;
+
+    // Calculate projection parameter
+    let t = ((flameX - x1) * (x2 - x1) + (flameY - y1) * (y2 - y1)) / lengthSquared;
+    t = Math.max(0, Math.min(1, t));
+
+    // Find closest point on line segment
+    const closestX = x1 + t * (x2 - x1);
+    const closestY = y1 + t * (y2 - y1);
+
+    // Calculate distance from flame to closest point
+    const distance = Math.sqrt(
+        (flameX - closestX) * (flameX - closestX) +
+        (flameY - closestY) * (flameY - closestY)
+    );
+
+    // Check if within collision range
+    if (distance <= (rope.type.width / 2 + candle.flameRadius)) {
+        return {
+            x: closestX,
+            y: closestY
+        };
     }
 
-    // Check if flame is within vertical range of rope
-    if (flameY < rope.y1 || flameY > rope.y2) {
-        return null;
-    }
-
-    // Collision detected! Return collision info
-    return {
-        x: rope.x,
-        y: flameY
-    };
+    return null;
 }
 
 // ==========================================
@@ -178,7 +213,7 @@ function updateRopeBurning(deltaTime) {
             // Check if rope has burned through
             if (rope.burnProgress >= rope.type.burnDuration) {
                 rope.isBroken = true;
-                rope.breakPoint = collision.y;
+                rope.breakPoint = { x: collision.x, y: collision.y };
                 rope.breakAnimation = 0;
             }
         } else {
@@ -210,25 +245,38 @@ function drawRope(rope) {
 
     if (rope.isBroken) {
         // Draw breaking animation
-        const breakY = rope.breakPoint;
+        const breakX = rope.breakPoint.x;
+        const breakY = rope.breakPoint.y;
         const animProgress = rope.breakAnimation;
 
-        // Top part (stays in place)
+        // Calculate the rope direction
+        const dx = rope.x2 - rope.x1;
+        const dy = rope.y2 - rope.y1;
+        const length = Math.sqrt(dx * dx + dy * dy);
+        const dirX = dx / length;
+        const dirY = dy / length;
+
+        // Top part (stays in place) - from start to break point
         ctx.strokeStyle = rope.type.color;
         ctx.lineWidth = rope.type.width;
         ctx.lineCap = 'round';
         ctx.beginPath();
-        ctx.moveTo(rope.x, rope.y1);
-        ctx.lineTo(rope.x, breakY);
+        ctx.moveTo(rope.x1, rope.y1);
+        ctx.lineTo(breakX, breakY);
         ctx.stroke();
 
-        // Bottom part (falls down and fades)
+        // Bottom part (falls down and fades) - from break point to end
         const fallDistance = animProgress * 100;
         const fadeAlpha = 1 - animProgress;
         ctx.globalAlpha = fadeAlpha;
+
+        // Calculate perpendicular direction for falling (gravity effect)
+        const fallX = fallDistance * 0.2; // Slight sideways drift
+        const fallY = fallDistance; // Falls downward
+
         ctx.beginPath();
-        ctx.moveTo(rope.x, breakY + fallDistance);
-        ctx.lineTo(rope.x, rope.y2 + fallDistance);
+        ctx.moveTo(breakX + fallX, breakY + fallY);
+        ctx.lineTo(rope.x2 + fallX, rope.y2 + fallY);
         ctx.stroke();
 
     } else {
@@ -237,8 +285,8 @@ function drawRope(rope) {
         ctx.lineWidth = rope.type.width;
         ctx.lineCap = 'round';
         ctx.beginPath();
-        ctx.moveTo(rope.x, rope.y1);
-        ctx.lineTo(rope.x, rope.y2);
+        ctx.moveTo(rope.x1, rope.y1);
+        ctx.lineTo(rope.x2, rope.y2);
         ctx.stroke();
 
         // Draw burn glow effect if currently burning
@@ -262,13 +310,25 @@ function drawRope(rope) {
                 ctx.fillStyle = gradient;
                 ctx.fillRect(collision.x - 30, collision.y - 30, 60, 60);
 
-                // Draw charred section of rope
-                const charHeight = 20 * burnIntensity;
+                // Draw charred section of rope along the rope direction
+                const dx = rope.x2 - rope.x1;
+                const dy = rope.y2 - rope.y1;
+                const length = Math.sqrt(dx * dx + dy * dy);
+                const dirX = dx / length;
+                const dirY = dy / length;
+
+                const charLength = 20 * burnIntensity;
                 ctx.strokeStyle = `rgba(50, 25, 0, ${burnIntensity})`;
                 ctx.lineWidth = rope.type.width + 2;
                 ctx.beginPath();
-                ctx.moveTo(rope.x, collision.y - charHeight / 2);
-                ctx.lineTo(rope.x, collision.y + charHeight / 2);
+                ctx.moveTo(
+                    collision.x - dirX * charLength / 2,
+                    collision.y - dirY * charLength / 2
+                );
+                ctx.lineTo(
+                    collision.x + dirX * charLength / 2,
+                    collision.y + dirY * charLength / 2
+                );
                 ctx.stroke();
             }
         }
