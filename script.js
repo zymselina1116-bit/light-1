@@ -353,38 +353,6 @@ function drawCandle() {
 }
 
 // ==========================================
-// ANIMATION LOOP
-// ==========================================
-
-let lastTime = Date.now();
-
-function animate() {
-    // Calculate delta time
-    const currentTime = Date.now();
-    const deltaTime = currentTime - lastTime;
-    lastTime = currentTime;
-
-    // Clear canvas
-    ctx.fillStyle = '#1a1410';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // Update rope burning logic
-    updateRopeBurning(deltaTime);
-
-    // Draw ropes (behind the candle)
-    drawRopes();
-
-    // Draw candle with flame (on top of ropes)
-    drawCandle();
-
-    // Continue animation loop
-    requestAnimationFrame(animate);
-}
-
-// Start the animation
-animate();
-
-// ==========================================
 // DEBUG INFO (Optional - can be removed)
 // ==========================================
 
@@ -424,20 +392,37 @@ function drawDebugInfo() {
     ctx.restore();
 }
 
-// Add debug rendering to animation loop
-const originalAnimate = animate;
+// ==========================================
+// ANIMATION LOOP
+// ==========================================
+
+let lastTime = Date.now();
+
 function animate() {
+    // Calculate delta time
     const currentTime = Date.now();
     const deltaTime = currentTime - lastTime;
     lastTime = currentTime;
 
+    // Clear canvas
     ctx.fillStyle = '#1a1410';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+    // Update rope burning logic
     updateRopeBurning(deltaTime);
-    drawRopes();
-    drawCandle();
-    drawDebugInfo(); // Add debug info
 
+    // Draw ropes (behind the candle)
+    drawRopes();
+
+    // Draw candle with flame (on top of ropes)
+    drawCandle();
+
+    // Draw debug info if enabled
+    drawDebugInfo();
+
+    // Continue animation loop
     requestAnimationFrame(animate);
 }
+
+// Start the animation
+animate();
