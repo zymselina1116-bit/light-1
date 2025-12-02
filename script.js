@@ -61,19 +61,19 @@ const ropeTypes = {
     thin: {
         width: 3,
         burnDuration: 3000,      // 3 seconds to burn through
-        color: '#8b7355',
+        color: '#4a3420',        // Dark brown
         glowColor: '#ff6600'
     },
     medium: {
         width: 6,
         burnDuration: 5000,      // 5 seconds to burn through
-        color: '#6b5845',
+        color: '#3d2817',        // Darker brown
         glowColor: '#ff8800'
     },
     thick: {
         width: 10,
         burnDuration: 8000,      // 8 seconds to burn through
-        color: '#4a3f35',
+        color: '#2b1f15',        // Very dark brown
         glowColor: '#ffaa00'
     }
 };
@@ -405,7 +405,7 @@ function animate() {
     lastTime = currentTime;
 
     // Clear canvas
-    ctx.fillStyle = '#1a1410';
+    ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // Update rope burning logic
