@@ -2,13 +2,17 @@
 // CANVAS SETUP AND INITIALIZATION
 // ==========================================
 
+console.log("Script loading...");
 const canvas = document.getElementById('gameCanvas');
+console.log("Canvas element:", canvas);
 const ctx = canvas.getContext('2d');
+console.log("Canvas context:", ctx);
 
 // Set canvas to fill the window
 function resizeCanvas() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
+    console.log("Canvas resized to:", canvas.width, "x", canvas.height);
     // Regenerate ropes when window resizes
     generateRopes();
 }
@@ -86,6 +90,7 @@ function generateRopes() {
     ropes = [];
     const numRopes = 20; // Fixed number of ropes
     const typeNames = ['thin', 'medium', 'thick'];
+    console.log("Generating", numRopes, "ropes...");
 
     for (let i = 0; i < numRopes; i++) {
         // Random angle (in radians) for rope direction
@@ -483,4 +488,5 @@ function animate() {
 }
 
 // Start the animation
+console.log("Starting animation with", ropes.length, "ropes");
 animate();
